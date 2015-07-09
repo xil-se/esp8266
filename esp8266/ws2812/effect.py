@@ -31,16 +31,11 @@ class Foo():
 
 	def render_lissajous(self, buf, u, v, A, a, B, b, x0, y0, delta, t, intensity):
 		(x, y) = self.lissajous(A, a, B + v, b, u, 4, self.i / 10.0, self.i / 10.0 + t/100.0)
-		print (x+70), y
+		#(x, y) = self.lissajous(A, a, B + v, b, u, 4, 1, t/100.0)
 		(r, g, b) = hsv_to_rgb(t/100.0, 1.0, 1.0)
 		r = int(r*16 * intensity)
 		g = int(g*16 * intensity)
 		b = int(b*16 * intensity)
-	
-		#u = 40 * math.sin(self.i / 10.0)	
-		#v = 3 * math.sin(self.i / 10.0 + math.pi/2)
-		#(x2, y2) = self.lissajous(20, 3, 4 + v, 6, u, 4, self.i / -10.0, self.i / 10.0 + t/100.0)
-		
 		if y >= 0 and y <= 8:
 			self.setpixel(buf, self.clamp(int(x + 70), 0, 143), self.clamp(int(y), 0, 7), (r, g, b))
 
@@ -49,20 +44,21 @@ class Foo():
 		i = self.i
 		u1 = 40 * math.sin(i / 10.0 + math.pi)	
 		u2 = 40 * math.sin(i / 10.0)	
-		v1 = 3 * math.sin(i / 10.0 + 3*math.pi/2)
-		v2 = 3 * math.sin(i / 10.0 + math.pi/2)
+		v1 = 2.5 * math.sin(i / 10.0 + 3*math.pi/2)
+		v2 = 2.5 * math.sin(i / 10.0 + math.pi/2)
 		i1 = v1/6 + 1
 		i2 = v2/6 + 1
+		
 		if v1 < 0:
 			for t in range(0, 300):
-				self.render_lissajous(buf, u1, v1, 20, 6, 4 + v1, 6, u1, 4, 0, t, i1)
+				self.render_lissajous(buf, u1, v1,  20, 6, 4,      6, u1, 4, 0, t, i1)
 			for t in range(0, 300):
-				self.render_lissajous(buf, u2, v2, 20, 3, 4 + v2, 6, u2, 4, 0, t, i2)
+				self.render_lissajous(buf, u2, v2,  20, 3, 4,      6, u2, 4, 0, t, i2)
 		else:
 			for t in range(0, 300):
-				self.render_lissajous(buf, u2, v2, 20, 3, 4 + v2, 6, u2, 4, 0, t, i2)
+				self.render_lissajous(buf, u2, v2,  20, 3, 4,      6, u2, 4, 0, t, i2)
 			for t in range(0, 300):
-				self.render_lissajous(buf, u1, v1, 20, 6, 4 + v1, 6, u1, 4, 0, t, i1)
+				self.render_lissajous(buf, u1, v1,  20, 6, 4,      6, u1, 4, 0, t, i1)
 
 	def render2(self, buf):
 		for x in range(0, 144):
