@@ -30,8 +30,7 @@ class Foo():
 
 
 	def render_lissajous(self, buf, u, v, A, a, B, b, x0, y0, delta, t, intensity):
-		(x, y) = self.lissajous(A, a, B + v, b, u, 4, self.i / 10.0, self.i / 10.0 + t/100.0)
-		#(x, y) = self.lissajous(A, a, B + v, b, u, 4, 1, t/100.0)
+		(x, y) = self.lissajous(A + v, a, B + v, b, u, 4, self.i / 10.0, self.i / 10.0 + t/100.0)
 		(r, g, b) = hsv_to_rgb(t/100.0, 1.0, 1.0)
 		r = int(r*16 * intensity)
 		g = int(g*16 * intensity)
