@@ -47,7 +47,7 @@ def set_pixel(buf, x, y, (r, g, b)):
 def build_framebuffer(frame):
     frame_buffer = bytearray(3*DISP_WIDTH*DISP_HEIGHT)
     gif_width, gif_height = frame.size
-    
+
     for y in range(0, DISP_HEIGHT):
         for x in range(0, DISP_WIDTH):
             if x < gif_width and y < gif_height:
