@@ -6,7 +6,7 @@ import time
 from PIL import Image
 import sys
 
-UDP_IP = "192.168.5.28"
+UDP_IP = "192.168.1.18"
 UDP_PORT = 8888
 DISP_WIDTH = 144
 DISP_HEIGHT = 8
@@ -28,7 +28,6 @@ def main():
             gif_width, gif_height = frame.size
 
             send_framebuffer(sock, frame_buffer)
-            print("Frame #%d sent" % (frame_idx))
             time.sleep(0.1)
             frame_idx = frame_idx + 1
         except EOFError:
