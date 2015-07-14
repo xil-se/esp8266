@@ -40,7 +40,7 @@ class Foo():
         r = int(r*16 * intensity)
         g = int(g*16 * intensity)
         b = int(b*16 * intensity)
-        if y >= 0 and y <= H:
+        if y >= 0 and y < H:
             self.setpixel(buf, self.clamp(int(x + 70), 0, W - 1), self.clamp(int(y), 0, 7), (r, g, b))
 
     def render_curves(self, buf):
