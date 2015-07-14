@@ -96,5 +96,10 @@ class Foo():
             time.sleep(0.02)
 
 if __name__ == "__main__":
-    Foo().main()
-
+    while True:
+        try:
+            Foo().main()
+        except KeyboardInterrupt:
+            break
+        except:
+            pass
