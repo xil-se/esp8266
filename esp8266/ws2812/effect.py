@@ -8,6 +8,10 @@ from colorsys import *
     - Konrad Beckmann
 '''
 
+W = 144
+H = 8
+BPP = 3
+
 class Foo():
     def __init__(self):
         self.i = 0
@@ -17,11 +21,11 @@ class Foo():
 
     def setpixel(self, buf, x, y, rgb):
         oldx=x
-        if y % 2 == 1: x = 143 - x
+        if y % 2 == 1: x = W - 1 - x
         try:
-            buf[x*3 + 144*3*y]     = int(rgb[1])
-            buf[x*3 + 144*3*y + 1] = int(rgb[0])
-            buf[x*3 + 144*3*y + 2] = int(rgb[2])
+            buf[x*BPP + W*BPP*y]     = int(rgb[1])
+            buf[x*BPP + W*BPP*y + 1] = int(rgb[0])
+            buf[x*BPP + W*BPP*y + 2] = int(rgb[2])
         except:
             print oldx, y, rgb
 
@@ -31,25 +35,23 @@ class Foo():
 
         return (x, y)
 
-
     def render_lissajous(self, buf, u, v, A, a, B, b, x0, y0, delta, t, intensity):
         (x, y) = self.lissajous(A + v, a, B + v, b, u, 4, self.i / 10.0, self.i / 10.0 + t/100.0)
-        (r, g, b) = hsv_to_rgb(t/100.0, 1.0, 1.0)
+        (r, g, b) = hsv_to_rgb(t / 100.0, 1.0, 1.0)
         r = int(r*16 * intensity)
         g = int(g*16 * intensity)
         b = int(b*16 * intensity)
-        if y >= 0 and y <= 8:
-            self.setpixel(buf, self.clamp(int(x + 70), 0, 143), self.clamp(int(y), 0, 7), (r, g, b))
+        if y >= 0 and y <= H:
+            self.setpixel(buf, self.clamp(int(x + 70), 0, W - 1), self.clamp(int(y), 0, 7), (r, g, b))
 
-
-    def render3(self, buf):
+    def render_curves(self, buf):
         i = self.i
         u1 = 40 * math.sin(i / 10.0 + math.pi)    
         u2 = 40 * math.sin(i / 10.0)    
-        v1 = 2.5 * math.sin(i / 10.0 + 3*math.pi/2)
-        v2 = 2.5 * math.sin(i / 10.0 + math.pi/2)
-        i1 = v1/6 + 1
-        i2 = v2/6 + 1
+        v1 = 2.5 * math.sin(i / 10.0 + 3 * math.pi / 2)
+        v2 = 2.5 * math.sin(i / 10.0 + math.pi / 2)
+        i1 = v1 / 6 + 1
+        i2 = v2 / 6 + 1
         
         if v1 < 0:
             for t in range(0, 300):
@@ -62,31 +64,14 @@ class Foo():
             for t in range(0, 300):
                 self.render_lissajous(buf, u1, v1,  20, 6, 4, 6, u1, 4, 0, t, i1)
 
-    def render2(self, buf):
-        for x in range(0, 144):
-            h = (x - self.i*4) % 144
-            (r, g, b) = hsv_to_rgb(h / 144.0, 1.0, 1.0)
-            y = int(4+4*math.sin(3.2*math.pi * ((x + self.i)/144.0)))
-            self.clamp(y, 0, 7)
-            v = 10
-            self.setpixel(buf, x, y, (r*v, g*v, b*v))
-            if x < 143:
-                self.setpixel(buf, (x + 1), y, (r*v, g*v, b*v))
-
-    def render1(self, buf):
-        for y in range(0,8):
-            for x in range(0, 144):
-                (r,g,b) = self.render(x, y)
-                buf[x*3 + y*144*3]     = chr(g)
-                buf[x*3 + y*144*3 + 1] = chr(r)
-                buf[x*3 + y*144*3 + 2] = chr(b)
-
-    def render(self, x, y):
-        if y % 2 == 1:
-            x = 144 - x
-        oldx = x
-        x = (x + int(30 * math.sin((self.i+y) / 3.0))) % 144
-        h = math.fmod((x + 30 * (1.0 + math.sin(self.i / 5.0))) / 144.0, 1.0)
+    def render_background(self, buf):
+        for y in range(0, H):
+            for x in range(0, W):
+                self.setpixel(buf, x, y, self.funky(x, y))
+        
+    def funky(self, x, y):
+        x = (x + int(30 * math.sin((self.i+y) / 3.0))) % W
+        h = math.fmod((x + 30 * (1.0 + math.sin(self.i / 5.0))) / W, 1.0)
         rgb = hsv_to_rgb(h, 1.0, 1.0)
         v = (math.sin(self.i / 3.0) + 1.0) + 1.5
         r = rgb[0] * 2.0 * v
@@ -101,11 +86,10 @@ class Foo():
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
         while True:
             self.i = (self.i + 1)
-            data = bytearray(144*8*3)
+            data = bytearray(W * H * BPP)
         
-            self.render1(data)
-            #self.render2(data)
-            self.render3(data)
+            self.render_background(data)
+            self.render_curves(data)
 
             sock.sendto("\x01" + bytes(data[0:1458]), (UDP_IP, UDP_PORT))
             sock.sendto("\x02" + bytes(data[1458:1458*2]), (UDP_IP, UDP_PORT))
