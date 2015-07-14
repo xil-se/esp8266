@@ -3,12 +3,16 @@ import time
 import math
 from colorsys import *
 
+'''
+	This code is ugly and I know it.
+	- Konrad Beckmann
+'''
+
+
 class Foo():
 	def __init__(self):
 		self.i = 0
 
-	def rainbow(a):
-		return hsv_to_rgb(a, 1.0, 1.0)
 	def clamp(self, x, a, b):
 		return max(min(x, b), a)
 
