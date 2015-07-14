@@ -30,9 +30,8 @@ class Foo():
             print oldx, y, rgb
 
     def lissajous(self, A, a, B, b, x0, y0, delta, t):
-        x = x0 + A * math.sin(a*t + delta)
-        y = y0 + B * math.sin(b*t)
-
+        x = x0 + A * math.sin(a * t + delta)
+        y = y0 + B * math.sin(b * t)
         return (x, y)
 
     def render_lissajous(self, buf, u, v, A, a, B, b, x0, y0, delta, t, intensity):
@@ -98,3 +97,4 @@ class Foo():
 
 if __name__ == "__main__":
     Foo().main()
+
