@@ -14,11 +14,6 @@ function check_wifi()
   tmr.alarm(0, 5000, tmr.ALARM_SINGLE, function() check_wifi() end)
 end
 
-init_wifi()
 check_wifi()
-
+dofile("api-key.lua")
 dofile("poll.lua")
-update()
-
---dofile("server_udp.lc")
-
