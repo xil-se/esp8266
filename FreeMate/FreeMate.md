@@ -27,6 +27,6 @@
 
 ### COPYING
 This code is licensed under the [Beerware](http://en.wikipedia.org/wiki/Beerware) license.
-Share and modify these instructions all over the place, but if we meet some day, and you think this stuff is worth it, you can buy me a beer in return.
+Share and modify these instructions as you please, but if we meet some day, and you think this stuff is worth it, you can buy me a beer in return.
 
 Konrad Beckmann
