@@ -1,3 +1,3 @@
-thingspeakapikey = "YOUR_API_KEY"
-wifi_ap = "SSID"
-wifi_key = "KEY"
+thingspeakapikey = "WSR15D96FZCSLQJK"
+wifi_ap = "cyborg"
+wifi_key = "talibaner"
