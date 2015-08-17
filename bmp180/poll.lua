@@ -13,7 +13,7 @@ function update()
     local t, p = getTP(5, 6)
     local data = data .. "&3=" .. t .. "&4=" .. p
     print(data)
-    post(data)
+    --post(data)
     tmr.alarm(1, 5000, tmr.ALARM_SINGLE, update)
 end
 
