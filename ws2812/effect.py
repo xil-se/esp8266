@@ -80,11 +80,11 @@ class Foo():
         return (int(r), int(g), int(b))
     
     def main(self):
-        UDP_IP = "192.168.5.32"
+        UDP_IP = "192.168.5.10"
         UDP_PORT = 8888
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
         while True:
-            self.i = (self.i + 1)
+            self.i = (self.i + 0.5)
             data = bytearray(W * H * BPP)
         
             self.render_background(data)
@@ -93,7 +93,7 @@ class Foo():
             sock.sendto("\x01" + bytes(data[0:1458]), (UDP_IP, UDP_PORT))
             sock.sendto("\x02" + bytes(data[1458:1458*2]), (UDP_IP, UDP_PORT))
             sock.sendto("\x03" + bytes(data[1458*2:]), (UDP_IP, UDP_PORT))
-            time.sleep(0.02)
+            time.sleep(0.01)
 
 if __name__ == "__main__":
     while True:
@@ -102,4 +102,6 @@ if __name__ == "__main__":
         except KeyboardInterrupt:
             break
         except:
+            print "ouchie.."
+            time.sleep(1)
             pass
