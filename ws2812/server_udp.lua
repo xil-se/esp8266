@@ -10,7 +10,9 @@ s:on("receive",function(s,c)
   packet = c:byte(1)
   if packet > 0 and packet < 4 then
     packets[packet] = c:sub(2, #c)
-    if packet == 3 then ws2812.writefast(3, table.concat(packets, ""), 1) end
+    if packet == 3 then
+      ws2812.writedual(3, 4, table.concat(packets, ""), 1)
+    end
   end
 end)
 s:listen(8888)
