@@ -30,9 +30,6 @@ window.onload = function() {
 
     if (decoded.charCodeAt(0) != 3) return;
 
-    console.log("full frame");
-    console.log(framebuffer);
-
     for (var y = 0; y < height; y++) {
       for (var X = 0; X < width; X++) {
         pixelindex = (y * width + X) * 4;
