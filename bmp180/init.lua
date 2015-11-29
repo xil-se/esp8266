@@ -10,10 +10,11 @@ function init_wifi()
 end
 
 function check_wifi()
-  if wifi.sta.getip() == nil then init_wifi() end
+  if wifi.sta.getip() == nil then init_wifi() else print(wifi.sta.getip()) end
   tmr.alarm(0, 5000, tmr.ALARM_SINGLE, function() check_wifi() end)
 end
 
 dofile("config.lua")
 check_wifi()
-dofile("poll.lua")
+--dofile("poll.lua")
+dofile("server_udp.lua")

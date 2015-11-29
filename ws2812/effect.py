@@ -1,6 +1,7 @@
 import socket
 import time
 import math
+import serial
 from colorsys import *
 
 '''
@@ -216,8 +217,7 @@ class Foo():
     def render_background(self, buf):
         for y in range(0, H):
             for x in range(0, W):
-                rgb = (x*32, x*32, x*32)
-                self.setpixel(buf, x, y, rgb)
+                self.setpixel(buf, x, y, self.funky(x, y))
         
     def funky(self, x, y):
         x = (x + int(30 * math.sin((self.i+y) / 3.0))) % W
@@ -241,11 +241,13 @@ class Foo():
                 j = -1
                 for x in y:
                     j = j + 1
-                    rgb = (0, x*16, 0)
-                    self.setpixel(data, j + a * 8 + offset_x, i + offset_y, rgb)
+                    if x > 0:
+                        #rgb = (255, 255, 255)
+                        rgb = (16, 16, 0)
+                        self.setpixel(data, j + a * 8 + offset_x, i + offset_y, rgb)
             
 
-    def main(self):
+    def udp(self):
         UDP_IP = "192.168.5.10"
         UDP_PORT = 8888
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
@@ -256,19 +258,63 @@ class Foo():
         
             self.render_background(data)
             #self.render_curves(data)
-            self.render_text(data, xxx, 0, "abcdefghijklmnopqrstuvwxyz")
-            xxx = xxx - 1
+            #self.render_text(data, xxx, 0, "  >_ xil.se abcdefghijklmnopqrstuvwxyz")
+            text = str(int(round(time.time() * 1000)))
+            self.render_text(data, xxx, 0, text)
 
             sock.sendto("\x01" + bytes(data[0:1458]), (UDP_IP, UDP_PORT))
             sock.sendto("\x02" + bytes(data[1458:1458*2]), (UDP_IP, UDP_PORT))
             sock.sendto("\x03" + bytes(data[1458*2:]), (UDP_IP, UDP_PORT))
-            time.sleep(0.05)
+            # time.sleep(0.1)
+
+
+    def main(self):
+
+        print("FOO!")
+        ser = serial.Serial('/dev/ttyUSB0', timeout=0.5)
+        ser.baudrate = 9600
+
+        ser.bytesize = serial.EIGHTBITS #number of bits per bytes
+        ser.parity = serial.PARITY_NONE #set parity check: no parity
+        ser.stopbits = serial.STOPBITS_ONE #number of stop bits
+
+
+        ser.write("dofile(\"uart.lua\")\n")
+        time.sleep(2)
+
+        #ser.baudrate = 115200
+        ser.baudrate = 9600
+
+        xxx = 0
+
+
+        while True: 
+            print("frame")
+            self.i = (self.i + 1)
+            data = bytearray(W * H * BPP)
+        
+            #self.render_background(data)
+            #self.render_curves(data)
+            #self.render_text(data, xxx, 0, "  >_ xil.se abcdefghijklmnopqrstuvwxyz")
+            #text = str(int(round(time.time() * 1000)))
+            #self.render_text(data, xxx, 0, text)
+            self.render_text(data, 0, 0, "A")
+
+            ser.write(data)
+            time.sleep(0.01)
+
+        ser.close()
+
+
 
 if __name__ == "__main__":
     while True:
         try:
-            Foo().main()
+            Foo().udp()
+            #Foo().main()
+#main()
         except KeyboardInterrupt:
             break
-        except:
+        except Exception as e:
+            print e
             pass
