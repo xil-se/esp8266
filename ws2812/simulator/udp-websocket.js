@@ -44,9 +44,20 @@ wsServer.on('request', function(request) {
 
 
 var udpserver = dgram.createSocket("udp4");
+var framebuffer = new Uint8Array(144*8*3);
 udpserver.on("message", function (msg, rinfo) {
+  if (msg[0] == 1) start = 0;
+  if (msg[0] == 2) start = 1458;
+  if (msg[0] == 3) start = 1458*2;
+
+  for (x = 1; x < msg.length; x++) {
+    framebuffer[start + x - 1] = msg[x];
+  }
+
+  if (msg[0] != 3) return;
+
   if (global_connection) {
-    global_connection.sendUTF(btoa(msg));
+    global_connection.sendUTF(JSON.stringify(framebuffer));
   }
 });
 

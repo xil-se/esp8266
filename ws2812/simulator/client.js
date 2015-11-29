@@ -7,28 +7,15 @@ window.onload = function() {
   var width = canvas.width;
   var height = canvas.height;
   var imagedata = context.createImageData(width, height);
-  var framebuffer = new Uint8Array(144*8*3);
 
   var ws;
   ws = new WebSocket("ws://localhost:8088/");
   ws.onopen = function() {
   }
   ws.onmessage = function(e) {
-//    console.log(e.data);
-
-    var decoded = atob(e.data);
-    var i, il = decoded.length;
-
+    var i, il = e.data.length;
     var x, X, y, r, g, b, pixelindex, start;
-    if (decoded.charCodeAt(0) == 1) start = 0;
-    if (decoded.charCodeAt(0) == 2) start = 1458;
-    if (decoded.charCodeAt(0) == 3) start = 1458*2;
-
-    for (x = 1; x < decoded.length; x++) {
-      framebuffer[start + x - 1] = decoded.charCodeAt(x);
-    }
-
-    if (decoded.charCodeAt(0) != 3) return;
+    var framebuffer = JSON.parse(e.data);
 
     for (var y = 0; y < height; y++) {
       for (var X = 0; X < width; X++) {
