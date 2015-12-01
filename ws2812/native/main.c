@@ -1,7 +1,7 @@
 #include <unistd.h>
 #include <stdio.h>
 
-void render(char* buf, int width, int height);
+void render(char* buf, int width, int height, int t);
 
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
@@ -15,8 +15,8 @@ void print_fb(char* buf, int width, int height) {
         int lower[width*3];
         int x, pos;
         for(x = 0; x < width; x++) {
-            int start1 = y*144*3*2 + x*3;
-            int start2 = y*144*3*2 + 144*3 + (143-x)*3;
+            int start1 = y*width*3*2 + x*3;
+            int start2 = y*width*3*2 + width*3 + (width - 1 - x)*3;
             int c = 32;
             upper[x*3 + 1] = CLAMP(0, 255, c*buf[start1]);
             upper[x*3    ] = CLAMP(0, 255, c*buf[start1 + 1]);
@@ -43,9 +43,10 @@ int main(void) {
     int height = 8;
     int bpp = 3;
     char buf[width * height * bpp];
+    int t = 0;
 
-    for(;;) {
-        render(buf, width, height);
+    for(;;t++) {
+        render(buf, width, height, t);
         print_fb(buf, width, height);
         fflush(stdout);
         usleep(1000000 / 20);
