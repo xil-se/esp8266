@@ -16,6 +16,7 @@ udpserver.on("message", function (msg, rinfo) {
   if (msg[0] != 3) return;
 
   var output = [];
+  output.push("\033[0;0H");
   for(var y = 0; y < 4; y++) {
     var upper = [];
     var lower = [];
@@ -39,7 +40,6 @@ udpserver.on("message", function (msg, rinfo) {
     }
     output.push("\033[0m\n");
   }
-  output.push('\n');
   console.log(output.join(''));
 });
 
