@@ -5,6 +5,10 @@
 <title>Pixel Drawing Example - Rembound.com</title>
 <script type="text/javascript" src="client.js"></script>
 <style>
+
+body {
+  background-color:#000000;
+}
 canvas {
   image-rendering: optimizeSpeed;             /* Older versions of FF          */
   image-rendering: -moz-crisp-edges;          /* FF 6.0+                       */
@@ -12,10 +16,19 @@ canvas {
   image-rendering: -o-crisp-edges;            /* OS X & Windows Opera (12.02+) */
   image-rendering: pixelated;                 /* Awesome future-browsers       */
   -ms-interpolation-mode: nearest-neighbor;   /* IE                            */
+
+  position:absolute;
+  top: 40%;
+  left: 50%;
+  margin-right: -100;
+  transform: translate(-50%, -50%)
+  
 }
 </style>
 </head>
 <body>
+<div style="height:100%">
 <canvas id="viewport" width="144" height="8" style=" width: 1152px; height: 64px; "></canvas>
+</div>
 </body>
 </html>
