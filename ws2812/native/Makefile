@@ -1,2 +1,2 @@
 all:
-	$(CC) *.c -o effect
+	$(CC) *.c -lm -o effect
