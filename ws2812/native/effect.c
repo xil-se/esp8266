@@ -10,6 +10,9 @@ int t;
 void setpixel(int x, int y, int col) {
   if (x < 0 || x >= width || y < 0 || y >= height) return;
 
+  int oldx = x;
+  if (y % 2 == 1) x = width - 1 - x;
+
   int stride = width * 3;
   buf[y*stride + x*3    ] = (col & 0x00ff00) >> 8;
   buf[y*stride + x*3 + 1] = (col & 0xff0000) >> 16;
@@ -55,22 +58,6 @@ background() {
   }
 }
 
-// Easier to do this as a post processing step
-void flipLines() {
-  char tmp[width*3];
-  int x, y;
-  int stride = width * 3;
-
-  for(y = 1; y < height; y += 2) {
-      memcpy(&tmp[0], buf + y*stride, width * 3);
-      for(x = 0; x < width; x++) {
-        buf[y*stride + x*3    ] = tmp[(width - x - 1) * 3    ];
-        buf[y*stride + x*3 + 1] = tmp[(width - x - 1) * 3 + 1];
-        buf[y*stride + x*3 + 2] = tmp[(width - x - 1) * 3 + 2];
-      }
-  }
-}
-
 void render(char* _buf, int _width, int _height, int _t) {
 
     buf = _buf;
@@ -85,6 +72,4 @@ void render(char* _buf, int _width, int _height, int _t) {
     text("hello", 0, 0, 0x000f0f);
 //    text("hello", 0, -8 + t % 16, 0xff00ff);
 //    scrollText("so the idea is that the rendering is done on the chip. it receives text and commands to reders it", 0);
-
-    flipLines(buf, width, height);
 }
