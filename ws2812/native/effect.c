@@ -3,7 +3,7 @@
 
 #include "font8x8_basic.h"
 
-char *buf;
+unsigned char *buf;
 int width;
 int height;
 int t;
@@ -16,8 +16,6 @@ char _BOUNCE[256];
 
 void setpixel(int x, int y, int col) {
   if (x < 0 || x >= width || y < 0 || y >= height) return;
-
-  int oldx = x;
   if (y % 2 == 1) x = width - 1 - x;
 
   int stride = width * 3;
@@ -31,7 +29,7 @@ void glyph(char c, int x, int y, int col) {
   if (c > 127) return;
   for (y1 = 0; y1 < 8; y1++) {
     for (x1 = 0; x1 < 8; x1++) {
-      if ((font8x8_basic[c][y1] >> x1) & 0x01) {
+      if ((font8x8_basic[(unsigned)c][y1] >> x1) & 0x01) {
         setpixel(x + x1, y + y1, col);
       }
     }
@@ -41,7 +39,7 @@ void glyph(char c, int x, int y, int col) {
 void text(char *str, int x, int y, int col) {
   char c;
 
-  while(c = *(str++)) {
+  while((c = *(str++))) {
     if (x > -8 && x < width && y > -8 && y < height) {
       glyph(c, x, y, col);
       x += 8;
@@ -51,9 +49,9 @@ void text(char *str, int x, int y, int col) {
 
 void bouncyText(char *str, int x, int y, int col) {
   char c;
-  int x1, y1, i = 0, offset;
+  int i = 0, offset;
 
-  while(c = *(str++)) {
+  while((c = *(str++))) {
     if (c > 127) continue;
     i++;
     // glyph(c, x, y + ((int) (sin((float)t/2 + i) * 3)), col);
@@ -66,7 +64,6 @@ void bouncyText(char *str, int x, int y, int col) {
 
 void solidBackground(int col) {
   int x, y;
-  int stride = width * 3;
   for(y = 0; y < height; y++) {
       for(x = 0; x < width; x++) {
         setpixel(x, y, col);
@@ -87,7 +84,7 @@ void background() {
   }
 }
 
-void initRenderer(char* _buf, int _width, int _height) {
+void initRenderer(unsigned char* _buf, int _width, int _height) {
   buf = _buf;
   width = _width;
   height = _height;
