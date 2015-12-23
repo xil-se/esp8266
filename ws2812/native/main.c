@@ -11,6 +11,7 @@ void render(int t);
 void print_fb(char* buf, int width, int height) {
     char text[width*height*3*4*20+100];
     char *text_cur = text;
+    printf("\033[0;0H");
     for(int y = 0; y < height / 2; y++) {
         int upper[width*3];
         int lower[width*3];
