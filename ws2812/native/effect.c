@@ -26,10 +26,13 @@ void setpixel(int x, int y, int col) {
 
 void glyph(char c, int x, int y, int col) {
   int x1, y1;
-  if (c > 127) return;
+  unsigned char g;
+
+  if ((unsigned)c > 127) return;
   for (y1 = 0; y1 < 8; y1++) {
+    g = font8x8_basic[(unsigned)c][y1];
     for (x1 = 0; x1 < 8; x1++) {
-      if ((font8x8_basic[(unsigned)c][y1] >> x1) & 0x01) {
+      if ((g >> x1) & 0x01) {
         setpixel(x + x1, y + y1, col);
       }
     }
