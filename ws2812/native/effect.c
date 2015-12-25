@@ -26,9 +26,7 @@ struct {
     uint32_t width;
     uint32_t height;
     uint32_t t;
-    char msg[8][256];
-    char msg_count;
-} ledmate;
+} renderer;
 
 
 
@@ -72,13 +70,13 @@ static void hsvtorgb(uint8_t *r, uint8_t *g, uint8_t *b, uint8_t h, uint8_t s, u
 }
 
 static void setpixel(uint32_t x, uint32_t y,  uint32_t col) {
-    if (x < 0 || x >= ledmate.width || y < 0 || y >= ledmate.height) return;
-    if (y % 2 == 1) x = ledmate.width - 1 - x;
+    if (x < 0 || x >= renderer.width || y < 0 || y >= renderer.height) return;
+    if (y % 2 == 1) x = renderer.width - 1 - x;
 
-    uint32_t stride = ledmate.width * 3;
-    ledmate.buf[y*stride + x*3    ] = (col & 0x00ff00) >> 8;
-    ledmate.buf[y*stride + x*3 + 1] = (col & 0xff0000) >> 16;
-    ledmate.buf[y*stride + x*3 + 2] = (col & 0x0000ff);
+    uint32_t stride = renderer.width * 3;
+    renderer.buf[y*stride + x*3    ] = (col & 0x00ff00) >> 8;
+    renderer.buf[y*stride + x*3 + 1] = (col & 0xff0000) >> 16;
+    renderer.buf[y*stride + x*3 + 2] = (col & 0x0000ff);
 }
 
 static void glyph(uint8_t c, uint32_t x, uint32_t y, uint32_t col) {
@@ -101,7 +99,7 @@ static void text(char *_str, int32_t x, int32_t y, uint32_t col) {
     uint8_t c;
 
     while((c = *(str++))) {
-        if (x > -8 && x < ledmate.width && y > -8 && y < ledmate.height) {
+        if (x > -8 && x < renderer.width && y > -8 && y < renderer.height) {
             glyph(c, x, y, col);
             x += 8;
         }
@@ -115,7 +113,7 @@ static void bouncyText(char *_str, int32_t x, int32_t y, uint32_t col) {
 
     while((c = *(str++))) {
         if (c > 127) continue;
-        offset = BOUNCE(((x << 2) + (ledmate.t << 3)));
+        offset = BOUNCE(((x << 2) + (renderer.t << 3)));
         glyph(c, x, y + offset, col);
         x += 8;
     }
@@ -123,8 +121,8 @@ static void bouncyText(char *_str, int32_t x, int32_t y, uint32_t col) {
 
 static void solidBackground(uint32_t col) {
     uint32_t x, y;
-    for(y = 0; y < ledmate.height; y++) {
-        for(x = 0; x < ledmate.width; x++) {
+    for(y = 0; y < renderer.height; y++) {
+        for(x = 0; x < renderer.width; x++) {
             setpixel(x, y, col);
         }
     }
@@ -132,51 +130,27 @@ static void solidBackground(uint32_t col) {
 
 static void background() {
     uint32_t x, X, y;
-    uint32_t stride = ledmate.width * 3;
-    for(y = 0; y < ledmate.height; y++) {
-        for(x = 0; x < ledmate.width; x++) {
-            X = (y % 2 == 1) ? ledmate.width - 1 - x : x;
+    uint32_t stride = renderer.width * 3;
+    for(y = 0; y < renderer.height; y++) {
+        for(x = 0; x < renderer.width; x++) {
+            X = (y % 2 == 1) ? renderer.width - 1 - x : x;
 
-            uint32_t h = ((ledmate.t >> 1) + x) * 2 + (SIN(ledmate.t * 10) >> 30)
-                    + (SIN(y * 30 + ledmate.t * 10) >> 28);
+            uint32_t h = ((renderer.t >> 1) + x) * 2 + (SIN(renderer.t * 10) >> 30)
+                    + (SIN(y * 30 + renderer.t * 10) >> 28);
             uint8_t r, g, b;
-            hsvtorgb(&r, &g, &b, h, 255, 16);
+            hsvtorgb(&r, &g, &b, h, 255, 8);
 
-            ledmate.buf[y*stride + X*3    ] = g;
-            ledmate.buf[y*stride + X*3 + 1] = r;
-            ledmate.buf[y*stride + X*3 + 2] = b;
+            renderer.buf[y*stride + X*3    ] = g;
+            renderer.buf[y*stride + X*3 + 1] = r;
+            renderer.buf[y*stride + X*3 + 2] = b;
         }
     }
 }
 
-void ledmate_push_msg(const char *_str, int32_t length) {
-    const uint8_t *str = (const uint8_t*) _str;
-    if (ledmate.msg_count == sizeof(ledmate.msg) / sizeof(ledmate.msg[0])) {
-        memmove(&ledmate.msg[0][0], &ledmate.msg[1][0], sizeof(ledmate.msg[0]) * (ledmate.msg_count - 1));
-    }
-    if (ledmate.msg_count < 8) ledmate.msg_count++;
-
-    length = length > 254 ? 254 : length;
-    memcpy(&ledmate.msg[ledmate.msg_count - 1][0], str, length);
-    ledmate.msg[ledmate.msg_count - 1][length] = '\0';
-}
-
 void ledmate_init(uint8_t* _buf, uint32_t _width, uint32_t _height) {
-    ledmate.buf = _buf;
-    ledmate.width = _width;
-    ledmate.height = _height;
-
-    ledmate.msg_count = 0;
-    ledmate_push_msg("xil.se", sizeof("xil.se"));
-    ledmate_push_msg("111111", sizeof("xil.se"));
-    ledmate_push_msg("222222", sizeof("xil.se"));
-    ledmate_push_msg("333333", sizeof("xil.se"));
-    ledmate_push_msg("444444", sizeof("xil.se"));
-    ledmate_push_msg("555555", sizeof("xil.se"));
-    ledmate_push_msg("666666", sizeof("xil.se"));
-    ledmate_push_msg("777777", sizeof("xil.se"));
-    ledmate_push_msg("888888", sizeof("xil.se"));
-
+    renderer.buf = _buf;
+    renderer.width = _width;
+    renderer.height = _height;
 
 #ifdef GENERATE_TABLES
     uint32_t i;
@@ -204,9 +178,9 @@ void ledmate_render(uint32_t _t) {
     (void) text;
     (void) bouncyText;
 
-    ledmate.t = _t;
+    renderer.t = _t;
 
     background();
-    text(ledmate.msg[(ledmate.t / 10) % ledmate.msg_count], 0, 0, 0x0f0000);
-    bouncyText("happy 32c3!", ledmate.t % (ledmate.width + 8*11) - 8*11, 0, 0);
+    text("xil.se", 0, 0, 0x0f0000);
+    bouncyText("happy 32c3!", renderer.t % (renderer.width + 8*11) - 8*11, 0, 0);
 }
