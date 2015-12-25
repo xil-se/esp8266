@@ -1,14 +1,13 @@
 #include <unistd.h>
 #include <stdio.h>
 
-void initRenderer(char* buf, int width, int height);
-void render(int t);
+#include "ledmate_renderer.h"
 
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 #define CLAMP(a, b, x) MIN(MAX((x), (a)), (b))
 
-void print_fb(char* buf, int width, int height) {
+void print_fb(unsigned char* buf, int width, int height) {
     char text[width*height*3*4*20+100];
     char *text_cur = text;
     printf("\033[0;0H");
@@ -44,12 +43,12 @@ int main(void) {
     int width = 144;
     int height = 8;
     int bpp = 3;
-    char buf[width * height * bpp];
+    unsigned char buf[width * height * bpp];
     int t = 0;
 
-    initRenderer(buf, width, height);
+    ledmate_init(buf, width, height);
     for(;;t++) {
-        render(t);
+        ledmate_render(t);
         print_fb(buf, width, height);
         fflush(stdout);
         usleep(1000000 / 20);
