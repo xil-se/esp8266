@@ -1,5 +1,6 @@
 #include <string.h> //memcpy
 #include <math.h> // don't use this later
+#include <stdio.h> // printf
 
 #include "font8x8_basic.h"
 
@@ -13,6 +14,45 @@ int _SIN[256];
 
 char _BOUNCE[256];
 #define BOUNCE(x) (_BOUNCE[(x) & 0xFF])
+
+void hsvtorgb(unsigned char *r, unsigned char *g, unsigned char *b, unsigned char h, unsigned char s, unsigned char v)
+{
+    unsigned char region, fpart, p, q, t;
+
+    if(s == 0) {
+        /* color is grayscale */
+        *r = *g = *b = v;
+        return;
+    }
+
+    /* make hue 0-5 */
+    region = h / 43;
+    /* find remainder part, make it from 0-255 */
+    fpart = (h - (region * 43)) * 6;
+
+    /* calculate temp vars, doing integer multiplication */
+    p = (v * (255 - s)) >> 8;
+    q = (v * (255 - ((s * fpart) >> 8))) >> 8;
+    t = (v * (255 - ((s * (255 - fpart)) >> 8))) >> 8;
+
+    /* assign temp vars based on color cone region */
+    switch(region) {
+        case 0:
+            *r = v; *g = t; *b = p; break;
+        case 1:
+            *r = q; *g = v; *b = p; break;
+        case 2:
+            *r = p; *g = v; *b = t; break;
+        case 3:
+            *r = p; *g = q; *b = v; break;
+        case 4:
+            *r = t; *g = p; *b = v; break;
+        default:
+            *r = v; *g = p; *b = q; break;
+    }
+
+    return;
+}
 
 void setpixel(int x, int y, int col) {
     if (x < 0 || x >= width || y < 0 || y >= height) return;
@@ -80,9 +120,16 @@ void background() {
     for(y = 0; y < height; y++) {
         for(x = 0; x < width; x++) {
             X = (y % 2 == 1) ? width - 1 - x : x;
-            buf[y*stride + X*3    ] = SIN(x + t)>>28;
-            buf[y*stride + X*3 + 1] = SIN(x - y - t)>>28;
-            buf[y*stride + X*3 + 2] = SIN(-4*x + 5*y - 3*t)>>28;
+
+            //X = (X + (SIN((t + y) / 3.0) >> 30))) % width
+            int h = ((t>>1) + x) * 2 + (SIN(t*10) >> 30) + (SIN(y*30 + t*10) >> 28);
+            //printf("%d\n", h);
+            unsigned char r, g, b;
+            hsvtorgb(&r, &g, &b, h, 255, 8);
+
+            buf[y*stride + X*3    ] = g;
+            buf[y*stride + X*3 + 1] = r;
+            buf[y*stride + X*3 + 2] = b;
         }
     }
 }
@@ -107,7 +154,7 @@ void render(int _t) {
 
 
     // text("hello", 0, 0, 0x000f0f);
-    bouncyText("happy 32c3!", t % (width + 8*11) - 8*11, 0, 0x060f00);
+    bouncyText("happy 32c3!", t % (width + 8*11) - 8*11, 0, 0);
     // bouncyText("weeeee", t % (width + 8*6) - 8*6, 0, 0x000f00);
     // text("hello", 0, -8 + t % 16, 0xff00ff);
     // scrollText("so the idea is that the rendering is done on the chip. it receives text and commands to reders it", 0);
