@@ -7,7 +7,7 @@
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 #define CLAMP(a, b, x) MIN(MAX((x), (a)), (b))
 
-void print_fb(unsigned char* buf, int width, int height) {
+static void print_fb(unsigned char* buf, int width, int height) {
     char text[width*height*3*4*20+100];
     char *text_cur = text;
     printf("\033[0;0H");
@@ -48,16 +48,24 @@ int main(void) {
 
     ledmate_init(buf, width, height);
 
-    if (0){
-        char foo[] = "\x03\x20\x04\x00\x00" "BOUNCE!";
-        ledmate_push_msg(foo, sizeof(foo));
-    }
     {
         char foo[] = "\x01\x00\x04\x00" "Green long scrolling text that is very long";
         ledmate_push_msg(foo, sizeof(foo));
     }
     {
         char foo[] = "\x02\x04\x00\x00" "Hello Red World";
+        ledmate_push_msg(foo, sizeof(foo));
+    }
+    {
+        char foo[] = "\x03\x04\x00\x00\x50" "BOUNCE!";
+        ledmate_push_msg(foo, sizeof(foo));
+    }
+    {
+        char foo[] = "\x04\x04\x00\x00" "SCROLL!";
+        ledmate_push_msg(foo, sizeof(foo));
+    }
+    {
+        char foo[] = "\x05\x04\x00\x00" "SCROLL reverse!";
         ledmate_push_msg(foo, sizeof(foo));
     }
 

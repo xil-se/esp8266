@@ -109,12 +109,12 @@ static void bouncy_text(char *str, int x, int y, int col) {
     int i = 0, offset;
 
     while((c = *(str++))) {
-        printf("%c ", c);
         if (c > 127) continue;
         i++;
         // glyph(c, x, y + ((int) (sin((float)t/2 + i) * 3)), col);
         // offset = (SIN(((x<<2) + (t<<3))) >> 30);
-        offset = BOUNCE(((x<<2) + (text_t<<3)));
+        // offset = BOUNCE(((x<<2) + (text_t<<3)));
+        offset = BOUNCE(((i*32) + (text_t<<3)));
         glyph(c, x, y + offset, col);
         x += 8;
     }
@@ -135,10 +135,7 @@ static void background() {
     for(y = 0; y < height; y++) {
         for(x = 0; x < width; x++) {
             X = (y % 2 == 1) ? width - 1 - x : x;
-
-            //X = (X + (SIN((t + y) / 3.0) >> 30))) % width
             int h = ((t>>1) + x) * 2 + (SIN(t*10) >> 30) + (SIN(y*30 + t*10) >> 28);
-            //printf("%d\n", h);
             unsigned char r, g, b;
             hsvtorgb(&r, &g, &b, h, 255, 8);
 
@@ -197,9 +194,11 @@ static int render_text(char *str) {
         case 2:
         case 3:
         case 4:
+        case 5:
             background();
             break;
-//        default:
+        default:
+            break;
     }
 
 
@@ -211,7 +210,6 @@ static int render_text(char *str) {
             unsigned int col = (str[1] << 16) | (str[2] << 8) | str[3];
             char *_str = &str[4];
             int len = strnlen(_str, 250);
-            printf("%d\n", len);
             if (direction) {
                 text(_str, 144 - text_t, 0, col);
             }
@@ -224,16 +222,30 @@ static int render_text(char *str) {
             break;
         }
         case 3:
-        direction = 1;
+        {
+            unsigned int col = (str[1] << 16) | (str[2] << 8) | str[3];
+            unsigned char dur = str[4];
+            char *_str = &str[5];
+            if (text_t > dur) return 1;
+            bouncy_text(_str, 0, 0, col);
+            break;
+        }
         case 4:
+        direction = 1;
+        case 5:
         {
             unsigned int col = (str[1] << 16) | (str[2] << 8) | str[3];
             char *_str = &str[4];
-//            int len = strlenmax(_str, 250);
-            bouncy_text(_str, 0, 0, col);
-
+            int len = strnlen(_str, 250);
+            if (text_t > 144 + 8 * len) return 1;
+            if (direction) {
+                bouncy_text(_str, 144 - text_t, 0, col);
+            }
+            else {
+                bouncy_text(_str, text_t - 8 * len, 0, col);
+            }
+            break;
         }
-        break;
     }
 
     return 0;
