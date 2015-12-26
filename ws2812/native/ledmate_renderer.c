@@ -111,9 +111,6 @@ static void bouncy_text(char *str, int x, int y, int col) {
     while((c = *(str++))) {
         if (c > 127) continue;
         i++;
-        // glyph(c, x, y + ((int) (sin((float)t/2 + i) * 3)), col);
-        // offset = (SIN(((x<<2) + (t<<3))) >> 30);
-        // offset = BOUNCE(((x<<2) + (text_t<<3)));
         offset = BOUNCE(((i*32) + (text_t<<3)));
         glyph(c, x, y + offset, col);
         x += 8;
@@ -137,7 +134,7 @@ static void background() {
             X = (y % 2 == 1) ? width - 1 - x : x;
             int h = ((t>>1) + x) * 2 + (SIN(t*10) >> 30) + (SIN(y*30 + t*10) >> 28);
             unsigned char r, g, b;
-            hsvtorgb(&r, &g, &b, h, 255, 8);
+            hsvtorgb(&r, &g, &b, h, 255, 16);
 
             buf[y*stride + X*3    ] = g;
             buf[y*stride + X*3 + 1] = r;
@@ -164,6 +161,19 @@ void ledmate_init(unsigned char* _buf, int _width, int _height) {
 
     current_msg = 0;
     msg_count = 0;
+
+    {
+        char foo[] = "\x01\x30\x30\x30" "<<< %s(un='%s') = %u";
+        ledmate_push_msg(foo, sizeof(foo));
+    }
+    {
+        char foo[] = "\x04\x00\x00\x00" "xil is my happy place";
+        ledmate_push_msg(foo, sizeof(foo));
+    }
+    {
+        char foo[] = "\x04\x00\x00\x00" "welcome to 32c3";
+        ledmate_push_msg(foo, sizeof(foo));
+    }
 
 #ifdef GENERATE_TABLES
     int i;
