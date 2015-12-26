@@ -47,6 +47,20 @@ int main(void) {
     int t = 0;
 
     ledmate_init(buf, width, height);
+
+    if (0){
+        char foo[] = "\x03\x20\x04\x00\x00" "BOUNCE!";
+        ledmate_push_msg(foo, sizeof(foo));
+    }
+    {
+        char foo[] = "\x01\x00\x04\x00" "Green long scrolling text that is very long";
+        ledmate_push_msg(foo, sizeof(foo));
+    }
+    {
+        char foo[] = "\x02\x04\x00\x00" "Hello Red World";
+        ledmate_push_msg(foo, sizeof(foo));
+    }
+
     for(;;t++) {
         ledmate_render(t);
         print_fb(buf, width, height);
