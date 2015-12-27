@@ -4,6 +4,7 @@
 //#include <c_stdio.h> // c_printf
 
 
+#include "ledmate_renderer.h"
 #include "ledmate_font8x8.h"
 
 // #define GENERATE_TABLES
@@ -19,6 +20,14 @@
 
 #define SIN(x) (_SIN[(x) & 0xFF])
 #define BOUNCE(x) (_BOUNCE[(x) & 0xFF])
+
+#define SCREEN_WIDTH    144
+#define SCREEN_HEIGHT   8
+
+typedef enum {
+    direction_left,
+    direction_right,
+} direction;
 
 unsigned char *buf;
 int width;
@@ -83,9 +92,9 @@ static void glyph(char c, int x, int y, int col) {
     unsigned char g;
 
     if ((unsigned)c > 127) return;
-    for (y1 = 0; y1 < 8; y1++) {
+    for (y1 = 0; y1 < SCREEN_HEIGHT; y1++) {
         g = font8x8_basic[(unsigned)c][y1];
-        for (x1 = 0; x1 < 8; x1++) {
+        for (x1 = 0; x1 < SCREEN_HEIGHT; x1++) {
             if ((g >> x1) & 0x01) {
                 setpixel(x + x1, y + y1, col);
             }
@@ -93,14 +102,14 @@ static void glyph(char c, int x, int y, int col) {
     }
 }
 
-static void text(char *str, int x, int y, int col) {
+static void render_text(char *str, int x, int y, int col) {
     char c;
 
     while((c = *(str++))) {
-        if (x > -8 && x < width && y > -8 && y < height) {
+        if (x > -SCREEN_HEIGHT && x < width && y > -SCREEN_HEIGHT && y < height) {
             glyph(c, x, y, col);
         }
-        x += 8;
+        x += SCREEN_HEIGHT;
     }
 }
 
@@ -113,7 +122,7 @@ static void bouncy_text(char *str, int x, int y, int col) {
         i++;
         offset = BOUNCE(((i*32) + (text_t<<3)));
         glyph(c, x, y + offset, col);
-        x += 8;
+        x += SCREEN_HEIGHT;
     }
 }
 
@@ -195,16 +204,17 @@ void ledmate_init(unsigned char* _buf, int _width, int _height) {
 #endif
 }
 
-static int render_text(char *str) {
-    unsigned char mode = str[0];
-    char direction = 0;
+static int render_message(char *str) {
+    ledmate_header*     header = (ledmate_header*)str;
 
-    switch (mode) {
-        case 1:
-        case 2:
-        case 3:
-        case 4:
-        case 5:
+    direction dir = direction_right;
+
+    switch (header->mode) {
+        case ledmate_mode_text_left:
+        case ledmate_mode_text_right:
+        case ledmate_mode_bounce_text:
+        case ledmate_mode_bounce_text_left:
+        case ledmate_mode_bounce_text_right:
             background();
             break;
         default:
@@ -212,47 +222,54 @@ static int render_text(char *str) {
     }
 
 
-    switch (mode) {
-        case 1:
-            direction = 1;
-        case 2:
+    switch (header->mode) {
+        case ledmate_mode_text_left:
+            dir = direction_left;
+        case ledmate_mode_text_right:
         {
-            unsigned int col = (str[1] << 16) | (str[2] << 8) | str[3];
-            char *_str = &str[4];
-            int len = strnlen(_str, 250);
-            if (direction) {
-                text(_str, 144 - text_t, 0, col);
+            ledmate_text* text = (ledmate_text*)header->payload;
+            unsigned int col = text->r << 16 | text->g << 8 | text->b << 0;
+            int len = strnlen(text->text, 250);
+            switch (dir) {
+                case direction_left:
+                    render_text(text->text, SCREEN_WIDTH - text_t, 0, col);
+                    break;
+                case direction_right:
+                    render_text(text->text, text_t - SCREEN_HEIGHT * len, 0, col);
+                    break;
+                default:
+                    break;
             }
-            else {
-                text(_str, text_t - 8 * len, 0, col);
-            }
-            if (text_t > 144 + 8 * len) {
+            if (text_t > SCREEN_WIDTH + SCREEN_HEIGHT * len) {
                 return 1;
             }
             break;
         }
-        case 3:
+        case ledmate_mode_bounce_text:
         {
-            unsigned int col = (str[1] << 16) | (str[2] << 8) | str[3];
-            unsigned char dur = str[4];
-            char *_str = &str[5];
-            if (text_t > dur) return 1;
-            bouncy_text(_str, 0, 0, col);
+            ledmate_bounce_text* text = (ledmate_bounce_text*)header->payload;
+            unsigned int col = text->r << 16 | text->g << 8 | text->b << 0;
+            if (text_t > text->duration) return 1;
+            bouncy_text(text->text, 0, 0, col);
             break;
         }
-        case 4:
-        direction = 1;
-        case 5:
+        case ledmate_mode_bounce_text_left:
+            dir = direction_left;
+        case ledmate_mode_bounce_text_right:
         {
-            unsigned int col = (str[1] << 16) | (str[2] << 8) | str[3];
-            char *_str = &str[4];
-            int len = strnlen(_str, 250);
-            if (text_t > 144 + 8 * len) return 1;
-            if (direction) {
-                bouncy_text(_str, 144 - text_t, 0, col);
-            }
-            else {
-                bouncy_text(_str, text_t - 8 * len, 0, col);
+            ledmate_text* text = (ledmate_text*)header->payload;
+            unsigned int col = text->r << 16 | text->g << 8 | text->b << 0;
+            int len = strnlen(text->text, 250);
+            if (text_t > SCREEN_WIDTH + SCREEN_HEIGHT * len) return 1;
+            switch (dir) {
+                case direction_left:
+                    bouncy_text(text->text, SCREEN_WIDTH - text_t, 0, col);
+                    break;
+                case direction_right:
+                    bouncy_text(text->text, text_t - SCREEN_HEIGHT * len, 0, col);
+                    break;
+                default:
+                    break;
             }
             break;
         }
@@ -264,13 +281,12 @@ static int render_text(char *str) {
 void ledmate_render(int _t) {
     (void) background;
     (void) solid_background;
-    (void) text;
     (void) bouncy_text;
 
     t = _t;
 
     if (msg_count > 0) {
-        int ret = render_text(msg[current_msg]);
+        int ret = render_message(msg[current_msg]);
         text_t++;
         if (ret) {
             current_msg = (current_msg + 1) % msg_count;

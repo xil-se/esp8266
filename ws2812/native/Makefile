@@ -1,2 +1,2 @@
 all:
-	$(CC) *.c -lm -Wall -Werror -Wpedantic -o effect
+	$(CC) *.c -lm -Wall -Werror -Wpedantic -o effect -g
