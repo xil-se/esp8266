@@ -5,7 +5,7 @@ function init_wifi()
 	print('chip: ',node.chipid())
 	print('heap: ',node.heap())
 	-- wifi config start
-	wifi.sta.config("cyborg", "talibaner")
+	wifi.sta.config("Free wifi", "")
 	-- wifi config end
 end
 
