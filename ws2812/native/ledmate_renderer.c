@@ -5,6 +5,7 @@
 
 #include "ledmate_renderer.h"
 #include "ledmate_font8x8.h"
+#include "alpha_blend_int.h"
 
 #define MAX(x,y) ((x)>(y) ? (x):(y))
 
@@ -40,6 +41,8 @@ static int text_t;
 static int current_msg;
 static char msg[8][MAX_MESSAGE_SIZE];
 static char msg_count = 0;
+
+#define ACOLOR(a, r, g, b) ((a)<<24 | (r)<<16 | (g)<<8 | (b)<<0)
 
 static void hsvtorgb(unsigned char *r, unsigned char *g, unsigned char *b, unsigned char h, unsigned char s, unsigned char v)
 {
@@ -90,6 +93,29 @@ static void setpixel(int x, int y, int col) {
     buf[y*stride + x*3 + 2] = (col & 0x0000ff);
 }
 
+static color getpixel(int x, int y)
+{
+    color c = { .u = 0 };
+
+    if (x < 0 || x >= width || y < 0 || y >= height)
+       return c;
+    if (y % 2 == 1)
+        x = width - 1 - x;
+
+    int stride = width * 3;
+
+    c.c.a = 0xff;
+    c.c.r = buf[y*stride + x*3 + 1];
+    c.c.g = buf[y*stride + x*3 + 0];
+    c.c.b = buf[y*stride + x*3 + 2];
+
+    c.c.r = buf[y*stride + x*3 + 1];
+    c.c.g = buf[y*stride + x*3 + 0];
+    c.c.b = buf[y*stride + x*3 + 2];
+
+    return c;
+}
+
 static void glyph(char c, int x, int y, int col) {
     int x1, y1;
     unsigned char g;
@@ -129,38 +155,38 @@ static void bouncy_text(char *str, int x, int y, int col) {
     }
 }
 
-static void render_image(ledmate_image* image, int x, int y) {
+static void render_image_(ledmate_image* image, int x, int y, int bounce) {
     int x1;
     int y1;
+    int offset = 0;
 
     for (y1 = 0; y1 < image->y; y1++) {
         for (x1 = 0; x1 < image->x; x1++) {
-            unsigned int col = image->pixels[y1*image->x + x1].r << 16 |
-                               image->pixels[y1*image->x + x1].g <<  8 |
-                               image->pixels[y1*image->x + x1].b <<  0;
-            if (image->pixels[y1*image->x + x1].a != 0) {
-                setpixel(x + x1, y + y1, col);
+            color col;
+                color bg;
+            col.u = ACOLOR(image->pixels[y1*image->x + x1].a,
+                           image->pixels[y1*image->x + x1].r,
+                           image->pixels[y1*image->x + x1].g,
+                           image->pixels[y1*image->x + x1].b);
+            if (bounce)
+                offset = BOUNCE((x1<<5) + (text_t<<5));
+            if (col.c.a != 0xff && col.c.a != 0x00) {
+                bg = getpixel(x + x1, y + y1 + offset);
+                col = alpha_blend(col, bg);
+            }
+            if (col.c.a != 0x00) {
+                setpixel(x + x1, y + y1 + offset, col.u);
             }
         }
     }
 }
 
-static void render_image_bounce(ledmate_image* image, int x, int y) {
-    int x1;
-    int y1;
-    int offset;
+static void render_image(ledmate_image* image, int x, int y) {
+    render_image_(image, x, y, 0);
+}
 
-    for (y1 = 0; y1 < image->y; y1++) {
-        for (x1 = 0; x1 < image->x; x1++) {
-            unsigned int col = image->pixels[y1*image->x + x1].r << 16 |
-                               image->pixels[y1*image->x + x1].g <<  8 |
-                               image->pixels[y1*image->x + x1].b <<  0;
-            offset = BOUNCE((x1<<5) + (text_t<<5));
-            if (image->pixels[y1*image->x + x1].a != 0) {
-                setpixel(x + x1, y + y1 + offset, col);
-            }
-        }
-    }
+static void render_image_bounce(ledmate_image* image, int x, int y) {
+    render_image_(image, x, y, 1);
 }
 
 static void solid_background(int col) {
@@ -279,6 +305,19 @@ void ledmate_init(unsigned char* _buf, int _width, int _height) {
             "\x00\x00\x00\x00" "\xff\xff\x00\x00" "\xff\xff\x00\x00" "\x00\x00\x00\x00" "\x00\x00\x00\x00" "\xff\xff\x00\x00" "\xff\xff\x00\x00" "\x00\x00\x00\x00" "\x00\x00\x00\x00" "\xff\x00\x00\x00" "\xff\x00\x00\x00" "\x00\x00\x00\x00" "\x00\x00\x00\x00" "\xff\x00\x00\x00" "\xff\x00\x00\x00" "\x00\x00\x00\x00"
             "\x00\x00\x00\x00" "\x00\x00\x00\x00" "\xff\xff\x00\x00" "\xff\xff\x00\x00" "\xff\xff\x00\x00" "\xff\xff\x00\x00" "\x00\x00\x00\x00" "\x00\x00\x00\x00" "\x00\x00\x00\x00" "\x00\x00\x00\x00" "\xff\x00\x00\x00" "\xff\x00\x00\x00" "\xff\x00\x00\x00" "\xff\x00\x00\x00" "\x00\x00\x00\x00" "\x00\x00\x00\x00"
             "\x00\x00\x00\x00" "\x00\x00\x00\x00" "\x00\x00\x00\x00" "\xff\xff\x00\x00" "\xff\xff\x00\x00" "\x00\x00\x00\x00" "\x00\x00\x00\x00" "\x00\x00\x00\x00" "\x00\x00\x00\x00" "\x00\x00\x00\x00" "\x00\x00\x00\x00" "\xff\x00\x00\x00" "\xff\x00\x00\x00" "\x00\x00\x00\x00" "\x00\x00\x00\x00" "\x00\x00\x00\x00"
+        ; // end of string
+        foo[0] = ledmate_mode_bounce_image_right;
+        ledmate_push_msg(foo, sizeof(foo));
+    }
+#endif
+#if 1
+    {
+        char foo[] = "\x00"
+            "\x20" "\x04"
+            "\x11\x00\x00\x00" "\x11\x00\x00\x00" "\x33\x00\x00\x00" "\x33\x00\x00\x00" "\x55\x00\x00\x00" "\x55\x00\x00\x00" "\x77\x00\x00\x00" "\x77\x00\x00\x00" "\xaa\x00\x00\x00" "\xaa\x00\x00\x00" "\xcc\x00\x00\x00" "\xcc\x00\x00\x00" "\xdd\x00\x00\x00" "\xdd\x00\x00\x00" "\xff\x00\x00\x00" "\xff\x00\x00\x00" "\xff\x00\x00\x00" "\xff\x00\x00\x00" "\xdd\x00\x00\x00" "\xdd\x00\x00\x00" "\xcc\x00\x00\x00" "\xcc\x00\x00\x00" "\xaa\x00\x00\x00" "\xaa\x00\x00\x00" "\x77\x00\x00\x00" "\x77\x00\x00\x00" "\x55\x00\x00\x00" "\x55\x00\x00\x00" "\x33\x00\x00\x00" "\x33\x00\x00\x00" "\x11\x00\x00\x00" "\x11\x00\x00\x00"
+            "\x11\x00\x00\x00" "\x11\x00\x00\x00" "\x33\x00\x00\x00" "\x33\x00\x00\x00" "\x55\x00\x00\x00" "\x55\x00\x00\x00" "\x77\x00\x00\x00" "\x77\x00\x00\x00" "\xaa\x00\x00\x00" "\xaa\x00\x00\x00" "\xcc\x00\x00\x00" "\xcc\x00\x00\x00" "\xdd\x00\x00\x00" "\xdd\x00\x00\x00" "\xff\x00\x00\x00" "\xff\x00\x00\x00" "\xff\x00\x00\x00" "\xff\x00\x00\x00" "\xdd\x00\x00\x00" "\xdd\x00\x00\x00" "\xcc\x00\x00\x00" "\xcc\x00\x00\x00" "\xaa\x00\x00\x00" "\xaa\x00\x00\x00" "\x77\x00\x00\x00" "\x77\x00\x00\x00" "\x55\x00\x00\x00" "\x55\x00\x00\x00" "\x33\x00\x00\x00" "\x33\x00\x00\x00" "\x11\x00\x00\x00" "\x11\x00\x00\x00"
+            "\x11\x00\x00\x00" "\x11\x00\x00\x00" "\x33\x00\x00\x00" "\x33\x00\x00\x00" "\x55\x00\x00\x00" "\x55\x00\x00\x00" "\x77\x00\x00\x00" "\x77\x00\x00\x00" "\xaa\x00\x00\x00" "\xaa\x00\x00\x00" "\xcc\x00\x00\x00" "\xcc\x00\x00\x00" "\xdd\x00\x00\x00" "\xdd\x00\x00\x00" "\xff\x00\x00\x00" "\xff\x00\x00\x00" "\xff\x00\x00\x00" "\xff\x00\x00\x00" "\xdd\x00\x00\x00" "\xdd\x00\x00\x00" "\xcc\x00\x00\x00" "\xcc\x00\x00\x00" "\xaa\x00\x00\x00" "\xaa\x00\x00\x00" "\x77\x00\x00\x00" "\x77\x00\x00\x00" "\x55\x00\x00\x00" "\x55\x00\x00\x00" "\x33\x00\x00\x00" "\x33\x00\x00\x00" "\x11\x00\x00\x00" "\x11\x00\x00\x00"
+            "\x11\x00\x00\x00" "\x11\x00\x00\x00" "\x33\x00\x00\x00" "\x33\x00\x00\x00" "\x55\x00\x00\x00" "\x55\x00\x00\x00" "\x77\x00\x00\x00" "\x77\x00\x00\x00" "\xaa\x00\x00\x00" "\xaa\x00\x00\x00" "\xcc\x00\x00\x00" "\xcc\x00\x00\x00" "\xdd\x00\x00\x00" "\xdd\x00\x00\x00" "\xff\x00\x00\x00" "\xff\x00\x00\x00" "\xff\x00\x00\x00" "\xff\x00\x00\x00" "\xdd\x00\x00\x00" "\xdd\x00\x00\x00" "\xcc\x00\x00\x00" "\xcc\x00\x00\x00" "\xaa\x00\x00\x00" "\xaa\x00\x00\x00" "\x77\x00\x00\x00" "\x77\x00\x00\x00" "\x55\x00\x00\x00" "\x55\x00\x00\x00" "\x33\x00\x00\x00" "\x33\x00\x00\x00" "\x11\x00\x00\x00" "\x11\x00\x00\x00"
         ; // end of string
         foo[0] = ledmate_mode_bounce_image_right;
         ledmate_push_msg(foo, sizeof(foo));
