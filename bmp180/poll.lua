@@ -11,7 +11,7 @@ function update()
     local t, p = getTP(1, 2)
     local data = "sensor.temp.fridge " .. t .. "\nsensor.pressure.fridge " .. p .. "\n"
     local t, p = getTP(5, 6)
-    local data = data .. "sensor.temp.freezer " .. t .. "\nsensor.pressure.freezer " .. p .. "\n"
+    local data = data .. "sensor.temp.kitchen " .. t .. "\nsensor.pressure.kitchen " .. p .. "\n"
     print(data)
     post(data)
     tmr.alarm(1, 5000, tmr.ALARM_SINGLE, update)
@@ -19,8 +19,14 @@ end
 
 function post(d)
     local sk=net.createConnection(net.TCP, 0)
-    sk:connect(9999, "192.168.5.55")
-    sk:send(d)
+
+
+    sk:on("connection", function()
+        sk:send(d)
+        print("uploaded")
+    end)
+
+    sk:connect(1234, "192.168.5.55")
 end
 
 update()
